@@ -30,13 +30,13 @@ public sealed class ReservationServiceTests
     public void Reserve_WithTooFewSeats_DoesNotSaveOrSend()
     {
         // Arrange: Stub mit 1 freiem Platz und Doubles für Repository und Sender.
-        var availability = new SeatAvailabilityStub("EVENT-B", 1);
+        var availability = new SeatAvailabilityStub(Code, 1);
         var repository = new ReservationRepositoryDouble(saveSucceeds: true);
         var sender = new ConfirmationSenderSpy();
         var service = new ReservationService(availability, repository, sender);
 
         // Act:     2 Plätze reservieren.
-        var result = service.Reserve("anna@example.ch", "EVENT-B", 2);
+        var result = service.Reserve(Email, Code, 2);
 
         // Assert:  Ergebnis ist false; weder Speichern noch Senden wurde aufgerufen.
         Assert.False(result);
@@ -44,13 +44,20 @@ public sealed class ReservationServiceTests
         Assert.Empty(sender.SentConfirmations);
     }
 
-    [Fact(Skip = "TODO: Grenzfall testen")]
+    [Fact]
     public void Reserve_WithExactlyEnoughSeats_Succeeds()
     {
         // Arrange: Stub mit genau 2 freien Plätzen.
+        var availability = new SeatAvailabilityStub(Code, 2);
+        var repository = new ReservationRepositoryDouble(saveSucceeds: true);
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability, repository, sender);
+
         // Act:     2 Plätze reservieren.
+        var result = service.Reserve(Email, Code, 2);
+
         // Assert:  Ergebnis ist true.
-        throw new NotImplementedException();
+        Assert.True(result);
     }
 
     [Fact(Skip = "TODO: Platzanzahl 0 testen")]
