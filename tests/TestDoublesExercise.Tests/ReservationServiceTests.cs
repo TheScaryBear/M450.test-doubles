@@ -8,7 +8,18 @@ public sealed class ReservationServiceTests
     private const string Email = "ruediddysueli.@gmail.com";
     private const string Code = "KONZERT-67";
 
-    // Aufgabe 1
+    // Aufgabe 1:
+    // ReservationService hängt von der Schnittstelle ISeatAvailability ab statt ner konkreten Klasse, Abhängigkeit wird durch Dependency Injection übergeben.
+    // Deshalb wird im Testprojekt ein eigener Stub geschrieben, der die Schnittstelle implementiert und der Service direkt getestet wird.
+    // Die Schnittstelle erlaubt bereits genau eine Methode GetAvailableSeats(string eventCode), Anzahl Plätze wird zu int umgewandelt, und Result wird als richtig zurückgegeben wenns gleich oder grösser als seatCount ist, das gegenteil wenn kleiner.
+
+    // GetAvailableSeats liefert die Anzahl der momentan freier Plätze für genau diese Veranstaltung bereits reservierte Plätze sind schon abgezogen, der Wert ist nie negativ.
+    // Für einen unbekannten Veranstaltungscode liefert sie 0 und wirft keine Exception.
+
+    // SeatAvailabilityStub
+    // Der festgelegte Veranstaltungscode gibt die vorgegebene Anzahl zurück, sonst 0.
+    // Er berechnet keine echte Verfügbarkeit.
+
     [Fact]
     public void Reserve_WithEnoughSeats_ReturnsTrue()
     {
