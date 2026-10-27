@@ -72,7 +72,14 @@ public sealed class ReservationServiceTests
     }
 
 
-    // Aufgabe 2
+    // Aufgabe 2:
+    // Bei falschen Eingaben soll der Service keine Abhängigkeit aufrufen.
+    // Ein Aufruf, der nicht existiert, hinterlässt aber keine Spur im Resultat.
+    // Darum lassen wir die Doubles mitzählen.
+    //
+    // Der Stub zählt durch AvailabilityRequests, das Repository Double merkt sich jeden Speicherversuch und der Spy jede Bestätigung durch SentConfirmations.
+    // Nach der Exception wird geprüft, dass alle drei leer/0 sind.
+    // Der Produktionscode bleibt derselbe.
 
     [Fact]
     public void Reserve_WithZeroSeats_ThrowsBeforeCallingDependencies()
