@@ -14,9 +14,9 @@ public sealed class ReservationServiceTests
     {
         // Arrange: Stub mit 3 freien Plätzen, Repository mit erfolgreichem Speichern,
         //          eigener Sender-Spy und ReservationService.
-        var availability = new StubFixedSeatAvailability(Code, 3);
-        var repository = new RepositoryAlwaysSucceeds();
-        var sender = new DummyConfirmationSender();
+        var availability = new SeatAvailabilityStub(Code, 3);
+        var repository = new ReservationRepositoryDouble(saveSucceeds: true);
+        var sender = new ConfirmationSenderSpy();
         var service = new ReservationService(availability, repository, sender);
 
         // Act:     2 Plätze reservieren.
@@ -26,13 +26,22 @@ public sealed class ReservationServiceTests
         Assert.True(result);
     }
 
-    [Fact(Skip = "TODO: fehlende Verfügbarkeit prüfen")]
+    [Fact]
     public void Reserve_WithTooFewSeats_DoesNotSaveOrSend()
     {
         // Arrange: Stub mit 1 freiem Platz und Doubles für Repository und Sender.
+        var availability = new SeatAvailabilityStub("EVENT-B", 1);
+        var repository = new ReservationRepositoryDouble(saveSucceeds: true);
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability, repository, sender);
+
         // Act:     2 Plätze reservieren.
+        var result = service.Reserve("anna@example.ch", "EVENT-B", 2);
+
         // Assert:  Ergebnis ist false; weder Speichern noch Senden wurde aufgerufen.
-        throw new NotImplementedException();
+        Assert.False(result);
+        Assert.Empty(repository.SaveAttempts);
+        Assert.Empty(sender.SentConfirmations);
     }
 
     [Fact(Skip = "TODO: Grenzfall testen")]
@@ -109,31 +118,31 @@ public sealed class ReservationServiceTests
 
     //  Test Doubles
 
-    // Stub: liefert pro Veranstaltungscode eine festgelegte Anzahl freier Plätze.
-    // Er berechnet keine echte Verfügbarkeit. Unbekannte Codes liefern 0.
-    private sealed class StubFixedSeatAvailability(IReadOnlyDictionary<string, int> availableSeatsByEventCode)
-        : ISeatAvailability
+    private sealed class SeatAvailabilityStub(string eventCode, int availableSeats) : ISeatAvailability
     {
-        public StubFixedSeatAvailability(string eventCode, int availableSeats)
-            : this(new Dictionary<string, int> { [eventCode] = availableSeats })
-        {
-        }
-
-        public int GetAvailableSeats(string eventCode) =>
-            availableSeatsByEventCode.GetValueOrDefault(eventCode, 0);
+        public int GetAvailableSeats(string requestedEventCode) =>
+            requestedEventCode == eventCode ? availableSeats : 0;
     }
 
-    // Einfaches Repository-Double: Jeder Speicherversuch gelingt, gespeichert wird nichts.
-    private sealed class RepositoryAlwaysSucceeds : IReservationRepository
+    private sealed class ReservationRepositoryDouble(bool saveSucceeds) : IReservationRepository
     {
-        public bool TrySave(Reservation reservation) => true;
+        private readonly List<Reservation> _saveAttempts = [];
+
+        public IReadOnlyList<Reservation> SaveAttempts => _saveAttempts;
+
+        public bool TrySave(Reservation reservation)
+        {
+            _saveAttempts.Add(reservation);
+            return saveSucceeds;
+        }
     }
 
-    // Dummy: verschickt keine echte Bestätigung und merkt sich nichts.
-    private sealed class DummyConfirmationSender : IConfirmationSender
+    private sealed class ConfirmationSenderSpy : IConfirmationSender
     {
-        public void Send(Reservation reservation)
-        {
-        }
+        private readonly List<Reservation> _sentConfirmations = [];
+
+        public IReadOnlyList<Reservation> SentConfirmations => _sentConfirmations;
+
+        public void Send(Reservation reservation) => _sentConfirmations.Add(reservation);
     }
 }
