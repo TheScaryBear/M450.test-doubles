@@ -1,4 +1,3 @@
-using TestDoublesExercise.Tests.Doubles;
 namespace TestDoublesExercise.Tests;
 
 public sealed class ReservationServiceTests
@@ -7,24 +6,21 @@ public sealed class ReservationServiceTests
     // Die Beispiele für Stub, Spy und Moq stehen in TestDoubleExamples.cs.
 
     private const string Email = "ruediddysueli.@gmail.com";
-    private const string EventCode = "KONZERT-2026";
+    private const string Code = "KONZERT-67";
 
     // Aufgabe 1
-    private static ReservationService CreateServiceWithAvailableSeats(int availableSeats) =>
-        new(
-            new FixedSeatAvailabilityStub(EventCode, availableSeats),
-            new AlwaysSuccessfulRepository(),
-            new NoOpConfirmationSender());
-
     [Fact]
     public void Reserve_WithEnoughSeats_ReturnsTrue()
     {
         // Arrange: Stub mit 3 freien Plätzen, Repository mit erfolgreichem Speichern,
         //          eigener Sender-Spy und ReservationService.
-        var service = CreateServiceWithAvailableSeats(3);
+        var availability = new StubFixedSeatAvailability(Code, 3);
+        var repository = new RepositoryAlwaysSucceeds();
+        var sender = new DummyConfirmationSender();
+        var service = new ReservationService(availability, repository, sender);
 
         // Act:     2 Plätze reservieren.
-        var result = service.Reserve(Email, EventCode, 2);
+        var result = service.Reserve(Email, Code, 2);
 
         // Assert:  Ergebnis ist true.
         Assert.True(result);
@@ -109,5 +105,35 @@ public sealed class ReservationServiceTests
         // Act:     Nach Implementierung des Batch-Verfahrens beide zusammen reservieren.
         // Assert:  Ergebnis ist false; kein Batch-Speichern und keine Bestätigung.
         throw new NotImplementedException();
+    }
+
+    //  Test Doubles
+
+    // Stub: liefert pro Veranstaltungscode eine festgelegte Anzahl freier Plätze.
+    // Er berechnet keine echte Verfügbarkeit. Unbekannte Codes liefern 0.
+    private sealed class StubFixedSeatAvailability(IReadOnlyDictionary<string, int> availableSeatsByEventCode)
+        : ISeatAvailability
+    {
+        public StubFixedSeatAvailability(string eventCode, int availableSeats)
+            : this(new Dictionary<string, int> { [eventCode] = availableSeats })
+        {
+        }
+
+        public int GetAvailableSeats(string eventCode) =>
+            availableSeatsByEventCode.GetValueOrDefault(eventCode, 0);
+    }
+
+    // Einfaches Repository-Double: Jeder Speicherversuch gelingt, gespeichert wird nichts.
+    private sealed class RepositoryAlwaysSucceeds : IReservationRepository
+    {
+        public bool TrySave(Reservation reservation) => true;
+    }
+
+    // Dummy: verschickt keine echte Bestätigung und merkt sich nichts.
+    private sealed class DummyConfirmationSender : IConfirmationSender
+    {
+        public void Send(Reservation reservation)
+        {
+        }
     }
 }
