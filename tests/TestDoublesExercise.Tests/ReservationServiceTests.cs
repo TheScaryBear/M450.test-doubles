@@ -94,22 +94,44 @@ public sealed class ReservationServiceTests
         Assert.Empty(sender.SentConfirmations);
     }
 
-    [Fact(Skip = "TODO: negative Platzanzahl testen")]
+    [Fact]
     public void Reserve_WithNegativeSeats_ThrowsBeforeCallingDependencies()
     {
         // Arrange: Doubles, deren Aufrufe sich prüfen lassen.
+        var availability = new SeatAvailabilityStub(Code, 3);
+        var repository = new ReservationRepositoryDouble(saveSucceeds: true);
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability, repository, sender);
+
         // Act:     -1 Plätze reservieren.
+        var exception = Record.Exception(() => service.Reserve(Email, Code, -1));
+
         // Assert:  ArgumentOutOfRangeException; keine Abhängigkeit wurde aufgerufen.
-        throw new NotImplementedException();
+        var argumentException = Assert.IsType<ArgumentOutOfRangeException>(exception);
+        Assert.Equal("seatCount", argumentException.ParamName);
+        Assert.Equal(0, availability.AvailabilityRequests);
+        Assert.Empty(repository.SaveAttempts);
+        Assert.Empty(sender.SentConfirmations);
     }
 
-    [Fact(Skip = "TODO: leeren Veranstaltungscode testen")]
+    [Fact]
     public void Reserve_WithEmptyEventCode_ThrowsBeforeCallingDependencies()
     {
         // Arrange: Doubles, deren Aufrufe sich prüfen lassen.
+        var availability = new SeatAvailabilityStub(Code, 3);
+        var repository = new ReservationRepositoryDouble(saveSucceeds: true);
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability, repository, sender);
+
         // Act:     Mit leerem Veranstaltungscode reservieren.
+        var exception = Record.Exception(() => service.Reserve(Email, "", 1));
+
         // Assert:  ArgumentException; keine Abhängigkeit wurde aufgerufen.
-        throw new NotImplementedException();
+        var argumentException = Assert.IsType<ArgumentException>(exception);
+        Assert.Equal("eventCode", argumentException.ParamName);
+        Assert.Equal(0, availability.AvailabilityRequests);
+        Assert.Empty(repository.SaveAttempts);
+        Assert.Empty(sender.SentConfirmations);
     }
 
     [Fact(Skip = "TODO: E-Mail-Adresse aus Leerzeichen testen")]
