@@ -1,3 +1,4 @@
+using TestDoublesExercise.Tests.Doubles;
 namespace TestDoublesExercise.Tests;
 
 public sealed class ReservationServiceTests
@@ -5,14 +6,28 @@ public sealed class ReservationServiceTests
     // Entfernt Skip jeweils erst, wenn ihr den Test implementiert habt.
     // Die Beispiele für Stub, Spy und Moq stehen in TestDoubleExamples.cs.
 
-    [Fact(Skip = "TODO: eigenen Verfügbarkeits-Stub schreiben")]
+    private const string Email = "ruediddysueli.@gmail.com";
+    private const string EventCode = "KONZERT-2026";
+
+    // Aufgabe 1
+    private static ReservationService CreateServiceWithAvailableSeats(int availableSeats) =>
+        new(
+            new FixedSeatAvailabilityStub(EventCode, availableSeats),
+            new AlwaysSuccessfulRepository(),
+            new NoOpConfirmationSender());
+
+    [Fact]
     public void Reserve_WithEnoughSeats_ReturnsTrue()
     {
         // Arrange: Stub mit 3 freien Plätzen, Repository mit erfolgreichem Speichern,
         //          eigener Sender-Spy und ReservationService.
+        var service = CreateServiceWithAvailableSeats(3);
+
         // Act:     2 Plätze reservieren.
+        var result = service.Reserve(Email, EventCode, 2);
+
         // Assert:  Ergebnis ist true.
-        throw new NotImplementedException();
+        Assert.True(result);
     }
 
     [Fact(Skip = "TODO: fehlende Verfügbarkeit prüfen")]
