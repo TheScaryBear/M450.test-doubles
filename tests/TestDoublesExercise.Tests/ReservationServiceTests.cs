@@ -174,7 +174,9 @@ public sealed class ReservationServiceTests
     }
 
     // Aufgabe 4:
-    //
+    // Mock<IReservationRepository> wird statt nur den repository double verwendet
+    // Verify once prüft, ob es die genaue Reservierung ist, die gespeichert wurde.
+    // Verify never sagt, dass es nicht gespeichert wurde.
 
     [Fact]
     public void Reserve_WithTooFewSeats_DoesNotCallRepository()
