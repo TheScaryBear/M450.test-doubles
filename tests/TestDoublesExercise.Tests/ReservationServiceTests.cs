@@ -150,13 +150,24 @@ public sealed class ReservationServiceTests
         throw new NotImplementedException();
     }
 
-    [Fact(Skip = "TODO: fehlgeschlagenes Speichern testen")]
+    // Aufgabe 3:
+
+    [Fact]
     public void Reserve_WhenSavingFails_DoesNotSendConfirmation()
     {
         // Arrange: Stub mit genügend Plätzen, Repository liefert false, eigener Spy.
+        var availability = new SeatAvailabilityStub(Code, 3);
+        var repository = new ReservationRepositoryDouble(saveSucceeds: false);
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability, repository, sender);
+
         // Act:     Reservierung versuchen.
+        var result = service.Reserve(Email, Code, 2);
+
         // Assert:  Ergebnis ist false und der Spy hat keinen Aufruf aufgezeichnet.
-        throw new NotImplementedException();
+        Assert.False(result);
+        Assert.Single(repository.SaveAttempts);
+        Assert.Empty(sender.SentConfirmations);
     }
 
     [Fact(Skip = "TODO: Moq für fehlenden Speicherversuch verwenden")]
@@ -178,7 +189,7 @@ public sealed class ReservationServiceTests
     }
 
     //  Test Doubles
-
+    // Stub
     private sealed class SeatAvailabilityStub(string eventCode, int availableSeats) : ISeatAvailability
     {
         public int AvailabilityRequests { get; private set; }
@@ -190,6 +201,7 @@ public sealed class ReservationServiceTests
         }
     }
 
+    // Repository double
     private sealed class ReservationRepositoryDouble(bool saveSucceeds) : IReservationRepository
     {
         private readonly List<Reservation> _saveAttempts = [];
@@ -203,6 +215,7 @@ public sealed class ReservationServiceTests
         }
     }
 
+    // Spy
     private sealed class ConfirmationSenderSpy : IConfirmationSender
     {
         private readonly List<Reservation> _sentConfirmations = [];
