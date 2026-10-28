@@ -1,3 +1,4 @@
+using Moq;
 namespace TestDoublesExercise.Tests;
 
 public sealed class ReservationServiceTests
@@ -172,13 +173,26 @@ public sealed class ReservationServiceTests
         Assert.Empty(sender.SentConfirmations);
     }
 
-    [Fact(Skip = "TODO: Moq für fehlenden Speicherversuch verwenden")]
+    // Aufgabe 4:
+    //
+
+    [Fact]
     public void Reserve_WithTooFewSeats_DoesNotCallRepository()
     {
         // Arrange: Stub mit zu wenigen Plätzen und Mock<IReservationRepository>.
+        var availability = new SeatAvailabilityStub(Code, 1);
+        var repository = new Mock<IReservationRepository>();
+        repository.Setup(r => r.TrySave(It.IsAny<Reservation>())).Returns(true);
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability, repository.Object, sender);
+
         // Act:     Reservierung versuchen.
+        var result = service.Reserve(Email, Code, 2);
+
         // Assert:  Verify(..., Times.Never()) für TrySave.
-        throw new NotImplementedException();
+        Assert.False(result);
+        repository.Verify(r => r.TrySave(It.IsAny<Reservation>()), Times.Never());
+        Assert.Empty(sender.SentConfirmations);
     }
 
     [Fact(Skip = "Fortgeschrittene: ReserveBatch zuerst implementieren")]
@@ -190,7 +204,7 @@ public sealed class ReservationServiceTests
         throw new NotImplementedException();
     }
 
-    //  Test Doubles
+    // Test Doubles
     // Stub
     private sealed class SeatAvailabilityStub(string eventCode, int availableSeats) : ISeatAvailability
     {
