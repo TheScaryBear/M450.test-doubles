@@ -143,6 +143,8 @@ public sealed class ReservationServiceTests
     }
 
     // Aufgabe 5:
+    // Moq wird verwendet.
+    // Times Never ohne zusätzliche zähler im double zeigt, dass die methode nie verwendet wurde.
 
     [Fact]
     public void Reserve_WithWhitespaceEmail_ThrowsBeforeCallingDependencies()
