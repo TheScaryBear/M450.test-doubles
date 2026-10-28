@@ -151,6 +151,8 @@ public sealed class ReservationServiceTests
     }
 
     // Aufgabe 3:
+    // SeatAvailabilityStub gibt den Service ein vorgegebenen Wert während ConfirmationSenderSpy speichert, welche Reservierung der Service in ihn übergibt.
+    // Der Test kann damit die Aufrufe nachher prüfen.
 
     [Fact]
     public void Reserve_WhenSavingFails_DoesNotSendConfirmation()
