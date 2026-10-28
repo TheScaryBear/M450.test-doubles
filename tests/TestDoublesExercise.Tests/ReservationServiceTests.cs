@@ -142,13 +142,26 @@ public sealed class ReservationServiceTests
         Assert.Empty(sender.SentConfirmations);
     }
 
-    [Fact(Skip = "TODO: E-Mail-Adresse aus Leerzeichen testen")]
+    // Aufgabe 5:
+
+    [Fact]
     public void Reserve_WithWhitespaceEmail_ThrowsBeforeCallingDependencies()
     {
         // Arrange: Handgeschriebene Doubles oder Moq gezielt auswählen.
+        var availability = new Mock<ISeatAvailability>();
+        var repository = new Mock<IReservationRepository>();
+        var sender = new ConfirmationSenderSpy();
+        var service = new ReservationService(availability.Object, repository.Object, sender);
+
         // Act:     Mit einer E-Mail-Adresse aus Leerzeichen reservieren.
+        var exception = Record.Exception(() => service.Reserve("   ", Code, 1));
+
         // Assert:  ArgumentException; keine Abhängigkeit wurde aufgerufen.
-        throw new NotImplementedException();
+        var argumentException = Assert.IsType<ArgumentException>(exception);
+        Assert.Equal("customerEmail", argumentException.ParamName);
+        availability.Verify(a => a.GetAvailableSeats(It.IsAny<string>()), Times.Never());
+        repository.Verify(r => r.TrySave(It.IsAny<Reservation>()), Times.Never());
+        Assert.Empty(sender.SentConfirmations);
     }
 
     // Aufgabe 3:
